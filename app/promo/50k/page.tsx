@@ -14,6 +14,14 @@ export default function Promo50kPage() {
     e.preventDefault();
     setLoading(true);
 
+    // --- VALIDASI NOMOR WHATSAPP ---
+    if (!/^\d+$/.test(formData.phone) || !formData.phone.startsWith('08') || formData.phone.length < 7) {
+      alert("Pastikan Nomor WhatsApp valid:\n\n- Harus diawali dengan '08'\n- Minimal 7 digit angka");
+      setLoading(false);
+      return;
+    }
+    // --------------------------------
+
     const genderToSave = formData.gender === 'L' ? 'M' : 'F';
 
     const { data: customer, error: customerErr } = await supabase
@@ -75,7 +83,7 @@ export default function Promo50kPage() {
               <div className="bg-[#FACCCC] p-5 rounded-2xl border-2 border-[#000000] mb-8">
                 <p className="text-lg font-bold mb-3">Langkah Terakhir:</p>
                 <a 
-                  href="https://maps.google.com/YOUR_LINK_HERE" 
+                  href="https://maps.app.goo.gl/p1ufiChGmCn4TYBf7" 
                   target="_blank" 
                   rel="noreferrer" 
                   className="flex items-center justify-center gap-2 w-full bg-[#F06685] text-white hover:bg-[#DB3347] transition-colors p-3 rounded-xl font-bold border-2 border-[#000000] shadow-[4px_4px_0px_#000000] active:translate-y-1 active:shadow-none mb-4"
@@ -87,15 +95,33 @@ export default function Promo50kPage() {
                 </p>
               </div>
 
-              <div className="bg-[#FFF2E0] p-4 inline-block rounded-3xl border-4 border-[#F0D9CC] mb-4">
+              <div id="qr-code-container" className="bg-[#FFF2E0] p-4 inline-block rounded-3xl border-4 border-[#F0D9CC] mb-2">
                 <QRCodeCanvas value={voucherCode} size={200} fgColor="#000000" bgColor="#FFF2E0" />
               </div>
+
+              <button
+                onClick={() => {
+                  const canvas = document.querySelector('#qr-code-container canvas') as HTMLCanvasElement;
+                  if (canvas) {
+                    const url = canvas.toDataURL('image/png');
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `Voucher-Luna-${voucherCode}.png`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }
+                }}
+                className="block mx-auto mb-6 font-sans text-xs font-bold text-black bg-[#F0D9CC] px-3 py-1 rounded-lg border-2 border-black hover:bg-[#e6c8b5] transition-colors"
+              >
+                Unduh QR Code
+              </button>
               
               <div className="bg-[#F0D9CC] p-3 rounded-xl mb-4 border-2 border-[#000000] border-dashed">
                 <p className="text-2xl font-mono font-bold tracking-widest">{voucherCode}</p>
               </div>
               
-              <p className="text-[#F06685] font-bold text-sm bg-white border-2 border-[#F06685] py-2 rounded-full shadow-[2px_2px_0px_#F06685]">
+              <p className="text-white font-bold text-base bg-[#DB3347] py-2 px-4 rounded-full border-2 border-black shadow-[2px_2px_0px_#000000]">
                 Berlaku hingga 19 Agustus 2026
               </p>
             </div>
