@@ -61,7 +61,7 @@ export async function POST(request: Request) {
           content: base64Data,
           encoding: 'base64',
           contentType: 'image/png',
-          contentDisposition: 'inline',
+        contentDisposition: 'attachment' as const,
           cid: 'qrcode-image' // must match the src in img tag
         }
       ]

@@ -64,9 +64,13 @@ export default function ScannerPage() {
 
       {!scannedCode && (
         <div className="rounded-lg overflow-hidden border-4 border-gray-300">
-          <Scanner 
-            onResult={(text) => handleScan(text)} 
-            onError={(error) => console.log(error?.message)} 
+        <Scanner 
+            onScan={(result) => {
+              if (result && result.length > 0) {
+                handleScan(result[0].rawValue);
+              }
+            }} 
+            onError={(error: any) => console.log(error?.message)} 
           />
           <p className="text-center mt-2 text-gray-500">Point camera at customer's QR Code</p>
         </div>
