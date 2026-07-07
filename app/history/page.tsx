@@ -29,7 +29,7 @@ export default function History() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) router.push('/login');
+      if (!session) router.push('/');
       else {
         setSession(session);
         fetchVouchers();
@@ -103,9 +103,16 @@ export default function History() {
       <div className="mx-auto max-w-5xl">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Riwayat Voucher</h1>
-          <Link href="/" className="inline-flex rounded-xl bg-slate-200 px-4 py-2 font-medium text-slate-800 hover:bg-slate-300">
-            &larr; Kembali ke Dashboard
-          </Link>
+          <button
+            onClick={async () => {
+              await supabase.auth.signOut();
+              router.push('/');
+            }}
+            className="inline-flex items-center gap-2 rounded-xl bg-slate-200 px-4 py-2 font-medium text-slate-800 hover:bg-slate-300"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            Logout
+          </button>
         </div>
         
         <div className="grid gap-6 lg:grid-cols-[1fr_2fr]">

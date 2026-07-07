@@ -38,6 +38,14 @@ export default function Promo50kPage() {
       return;
     }
 
+    // 3. FORMAT TANGGAL LAHIR (Ubah YYYY-MM-DD menjadi DD/MM/YYYY)
+    let formattedDob = formData.dob;
+    if (formData.dob) {
+      const [year, month, day] = formData.dob.split('-');
+      // Hapus '0' di depan untuk bulan dan hari (misal: 01 -> 1)
+      formattedDob = `${parseInt(day, 10)}/${parseInt(month, 10)}/${year}`;
+    }
+
     const genderToSave = formData.gender === 'L' ? 'M' : 'F';
 
     const { data: customer, error: customerErr } = await supabase
@@ -47,7 +55,7 @@ export default function Promo50kPage() {
         phone: formattedPhone,
         email: formData.email || null,
         gender: genderToSave,
-        dob: formData.dob,
+        dob: formattedDob,
         address: formData.address || null,
         customer_type: 'eceran',
         is_frozen: 0,
