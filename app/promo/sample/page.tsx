@@ -10,26 +10,55 @@ export default function Promo50kPage() {
   const [voucherCode, setVoucherCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+ const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    // 1. FORMAT NOMOR UNTUK WHATSAPP BOT (Ubah awalan 0 / +62 menjadi 62)
+    let formattedPhone = formData.phone.trim().replace(/\D/g, ''); // Hapus semua karakter non-angka
+    if (formattedPhone.startsWith('0')) {
+      formattedPhone = '62' + formattedPhone.substring(1);
+    }
+    
+    if (formattedPhone.length < 10) {
+      alert("Nomor WhatsApp tidak valid.");
+      setLoading(false); return;
+    }
+
+    // 2. ANTI-SPAM (Cek apakah nomor HP sudah pernah dapat promo ini)
+    const { data: existingCustomer } = await supabase
+      .from('customers')
+      .select('id')
+      .eq('phone', formattedPhone)
+      .maybeSingle();
+
+    if (existingCustomer) {
+      alert("Maaf, Nomor WhatsApp ini sudah pernah mengklaim voucher.");
+      setLoading(false);
+      return;
+    }
+
+    const genderToSave = formData.gender === 'L' ? 'M' : 'F';
 
     const { data: customer, error: customerErr } = await supabase
       .from('customers')
       .insert([{
         name: formData.name,
-        phone: formData.phone,
+        phone: formattedPhone,
         email: formData.email || null,
-        gender: formData.gender,
+        gender: genderToSave,
         dob: formData.dob,
         address: formData.address || null,
-        customer_type: 'eceran'
+        customer_type: 'eceran',
+        is_frozen: 0,
+        accept_newsletter: 1,
+        credit_limit: 0
       }])
       .select('id')
       .single();
 
     if (customerErr || !customer) {
-      alert("Gagal menyimpan data. Silakan coba lagi.");
+      alert("Error dari Supabase: " + customerErr.message);
       setLoading(false);
       return;
     }
@@ -48,143 +77,180 @@ export default function Promo50kPage() {
     setLoading(false);
   };
 
-  // TAMPILAN JIKA VOUCHER BERHASIL DIGENERATE
-  if (voucherCode) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center p-6 pt-12">
-        <div className="bg-white p-8 rounded-3xl shadow-xl max-w-sm w-full text-center border-t-8 border-blue-600">
-          <h2 className="text-2xl font-extrabold text-gray-800 mb-2">Selamat! 🎉</h2>
-          <p className="text-gray-600 mb-8 text-sm">Voucher Diskon Rp 50.000 kamu sudah siap.</p>
-          
-          <div className="bg-white p-4 inline-block rounded-2xl shadow-inner border-2 border-gray-100 mb-6">
-            <QRCodeCanvas value={voucherCode} size={220} />
-          </div>
-          
-          <div className="bg-gray-100 p-3 rounded-lg mb-6">
-            <p className="text-3xl font-mono font-bold text-blue-700 tracking-widest">{voucherCode}</p>
-          </div>
-          
-          <p className="text-red-500 font-bold text-sm bg-red-50 py-2 rounded-full mb-6">
-            Berlaku hingga 19 Agustus 2026
-          </p>
-          
-          <div className="bg-blue-50 p-4 rounded-xl text-left">
-            <p className="text-sm text-blue-800 font-semibold mb-1">Langkah Terakhir:</p>
-            <p className="text-xs text-blue-600 leading-relaxed">
-              Tunjukkan layar HP ini dan bukti review Google Maps kamu ke kasir kami untuk menggunakan voucher.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ==========================================
-  // TAMPILAN HALAMAN UTAMA & FORM (LANDING PAGE)
-  // ==========================================
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
-      
-      {/* 1. HERO SECTION (COMPANY PROFILE) */}
-      <div className="bg-blue-600 text-white pt-12 pb-24 px-6 rounded-b-[3rem] shadow-lg text-center relative">
-        {/* Placeholder Logo - Ganti src dengan link logo Luna Pet Mall */}
-        <div className="w-24 h-24 bg-white rounded-full mx-auto mb-4 flex items-center justify-center shadow-md overflow-hidden">
-          <span className="text-blue-600 font-bold text-xl">LUNA</span>
-          {/* <img src="/logo-luna.png" alt="Luna Pet Mall Logo" className="w-full h-full object-cover" /> */}
-        </div>
+    <>
+      {/* Import Font Amaranth sesuai Brand Guidelines Luna */}
+      <style dangerouslySetInnerHTML={{__html: `
+        @import url('https://fonts.googleapis.com/css2?family=Amaranth:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+        .font-amaranth { font-family: 'Amaranth', sans-serif; }
+      `}} />
+
+      {/* Latar Belakang menggunakan Luna Eggshell (#FFF2E0) */}
+      <div className="min-h-screen bg-[#FFF2E0] font-amaranth text-[#000000] pb-12 selection:bg-[#F06685] selection:text-white">
         
-        <h1 className="text-3xl font-extrabold mb-1 tracking-tight">Luna Pet Mall</h1>
-        <p className="text-blue-200 font-medium italic mb-6">"Grow With Luna Pet-Mall"</p>
-        
-        <div className="flex flex-col items-center gap-2 text-sm text-blue-100">
-          <p className="flex items-center gap-2">
-            📍 Jl. Jemur Andayani 18, Surabaya
-          </p>
-          <p className="flex items-center gap-2">
-            📞 0817-398-810 | 📷 @lunapetshopsby
-          </p>
-        </div>
-      </div>
+        {/* ==========================================
+            TAMPILAN JIKA FORM BERHASIL DISUBMIT
+            ========================================== */}
+        {voucherCode ? (
+          <div className="flex flex-col items-center p-6 pt-12">
+            <div className="bg-white p-4 sm:p-8 rounded-[32px] border-4 border-[#000000] shadow-[8px_8px_0px_#F06685] max-w-sm w-full text-center">
+              <h2 className="text-3xl font-bold mb-2">Terima Kasih!</h2>
+              
+              <div className="bg-[#FACCCC] p-5 rounded-2xl border-2 border-[#000000] mb-8">
+                <p className="text-lg font-bold mb-3">Langkah Terakhir:</p>
+                <a 
+                  href="https://maps.app.goo.gl/p1ufiChGmCn4TYBf7" 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="flex items-center justify-center gap-2 w-full bg-[#F06685] text-white hover:bg-[#DB3347] transition-colors p-3 rounded-xl font-bold border-2 border-[#000000] shadow-[4px_4px_0px_#000000] active:translate-y-1 active:shadow-none mb-4"
+                >
+                  Berikan Review Google
+                </a>
+                <p className="text-xs font-sans font-medium leading-relaxed">
+                  Klik tombol di atas, lalu tunjukkan bukti review.
+                </p>
+              </div>
 
-      <div className="max-w-md mx-auto px-4 -mt-16 relative z-10">
-        
-        {/* 2. KARTU PROMO & GOOGLE REVIEW */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6 text-center border border-gray-100">
-          <div className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full inline-block mb-3">
-            PROMO KHUSUS!
-          </div>
-          <h2 className="text-xl font-bold text-gray-800 mb-2">
-            Dapatkan Free Voucher Rp 50.000
-          </h2>
-          <p className="text-sm text-gray-500 mb-6">
-            Cukup berikan ulasan positif di Google Maps dan isi data diri kamu di bawah ini.
-          </p>
-          
-          <a 
-            href="https://maps.google.com/..." 
-            target="_blank" 
-            rel="noreferrer" 
-            className="flex items-center justify-center gap-2 w-full bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50 transition-colors p-3 rounded-xl font-bold"
-          >
-            ⭐ 1. Klik untuk Review Google
-          </a>
-        </div>
+              <div id="qr-code-container" className="bg-[#FFF2E0] p-4 inline-block rounded-3xl border-4 border-[#F0D9CC] mb-2 w-full max-w-[232px] h-auto">
+                <QRCodeCanvas value={voucherCode} size={200} fgColor="#000000" bgColor="#FFF2E0" className="w-full h-auto" />
+              </div>
 
-        {/* 3. FORMULIR DATA DIRI */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
-          <h2 className="font-bold text-gray-800 mb-6 flex items-center gap-2">
-            <span className="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">2</span>
-            Isi Data Pengiriman Voucher
-          </h2>
-
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-            
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Nama Lengkap *</label>
-              <input required type="text" placeholder="Masukkan nama kamu" className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" onChange={e => setFormData({...formData, name: e.target.value})} />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Nomor WhatsApp *</label>
-              <input required type="tel" placeholder="0812xxxxxxx" className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" onChange={e => setFormData({...formData, phone: e.target.value})} />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Email <span className="text-gray-400 font-normal">(Opsional)</span></label>
-              <input type="email" placeholder="email@contoh.com" className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" onChange={e => setFormData({...formData, email: e.target.value})} />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Gender *</label>
-                <select required className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white" onChange={e => setFormData({...formData, gender: e.target.value})}>
-                  <option value="">Pilih...</option>
-                  <option value="L">Laki-laki</option>
-                  <option value="P">Perempuan</option>
-                </select>
+              <button
+                onClick={() => {
+                  const canvas = document.querySelector('#qr-code-container canvas') as HTMLCanvasElement;
+                  if (canvas) {
+                    const url = canvas.toDataURL('image/png');
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `Voucher-Luna-${voucherCode}.png`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }
+                }}
+                className="block mx-auto mb-6 font-sans text-xs font-bold text-black bg-[#F0D9CC] px-3 py-1 rounded-lg border-2 border-black hover:bg-[#e6c8b5] transition-colors"
+              >
+                Unduh QR Code
+              </button>
+              
+              <div className="bg-[#F0D9CC] p-3 rounded-xl mb-4 border-2 border-[#000000] border-dashed">
+                <p className="text-2xl font-mono font-bold tracking-widest">{voucherCode}</p>
               </div>
               
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Tanggal Lahir *</label>
-                <input required type="date" className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" onChange={e => setFormData({...formData, dob: e.target.value})} />
+              <p className="text-white font-bold text-base bg-[#DB3347] py-2 px-4 rounded-full border-2 border-black shadow-[2px_2px_0px_#000000]">
+                Berlaku hingga 19 Agustus 2026
+              </p>
+            </div>
+          </div>
+        ) : (
+          
+        /* ==========================================
+           TAMPILAN HALAMAN UTAMA & FORM (LANDING PAGE)
+           ========================================== */
+          <>
+            {/* HERO SECTION */}
+         <div className="pt-12 pb-20 px-6 text-center relative z-0">
+              {/* LOGO LUNA.JPG DIMASUKKAN DI SINI */}
+              <div className="w-28 h-28 bg-white rounded-full mx-auto mb-4 flex items-center justify-center border-4 border-[#000000] shadow-[6px_6px_0px_#F06685] overflow-hidden">
+                <img 
+                  src="/Luna.jpg" 
+                  alt="Luna Pet Mall Logo" 
+                  className="w-full h-full object-cover" 
+                />
+              </div>
+              
+              <h1 className="text-4xl font-bold mb-1 tracking-tight">Luna Pet Mall</h1>
+              <p className="text-[#F06685] text-xl italic font-bold mb-6">Grow With Luna Pet-Mall</p>
+              
+              <div className="flex flex-col items-center gap-1 font-sans font-semibold text-sm">
+                <p>📍 Jl. Jemur Handayani 1B, Surabaya</p>
+                <p>📞 0817-398-810  </p>
+                 <p className="flex items-center gap-1.5">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="inline-block">
+                    <defs>
+                      <radialGradient id="instagram-gradient" cx="0.3" cy="1.1" r="1">
+                        <stop offset="0%" stopColor="#F58529" />
+                        <stop offset="50%" stopColor="#DD2A7B" />
+                        <stop offset="100%" stopColor="#8134AF" />
+                      </radialGradient>
+                    </defs>
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="url(#instagram-gradient)"></rect>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" stroke="white" strokeWidth="2" fill="none"></path>
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" stroke="white" strokeWidth="2.5" strokeLinecap="round"></line>
+                  </svg>
+                  @lunapetshopsby
+                </p>
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Alamat Domisili <span className="text-gray-400 font-normal">(Opsional)</span></label>
-              <textarea placeholder="Tuliskan alamat lengkap..." rows={3} className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all resize-none" onChange={e => setFormData({...formData, address: e.target.value})} />
+            <div className="max-w-md mx-auto px-4 -mt-10 relative z-10">
+              
+              {/* KARTU INFO PROMO */}
+              <div className="bg-[#FACCCC] rounded-[24px] border-4 border-[#000000] shadow-[6px_6px_0px_#F06685] p-6 mb-8 text-center">
+                <div className="bg-[#000000] text-white text-xs font-bold px-4 py-2 rounded-full inline-block mb-3 uppercase tracking-wider">
+                  Promo Khusus!
+                </div>
+                <h2 className="text-2xl font-bold mb-2">
+                  Klaim Voucher Rp 50.000
+                </h2>
+                <p className="font-sans text-sm font-medium">
+                  Isi data diri kamu di bawah ini untuk mendapatkan akses Voucher Diskon dan link Google Review.
+                </p>
+              </div>
+
+              {/* FORMULIR DATA DIRI */}
+              <div className="bg-white rounded-[32px] border-4 border-[#000000] shadow-[8px_8px_0px_#F0D9CC] p-6">
+                <form onSubmit={handleSubmit} className="flex flex-col gap-5 font-sans font-medium">
+                  
+                  <div>
+                    <label className="block text-sm font-bold text-[#000000] mb-2">Nama Lengkap *</label>
+                    <input required type="text" placeholder="Nama " className="w-full bg-[#FFF2E0] border-2 border-[#000000] p-3 rounded-xl focus:ring-0 focus:border-[#F06685] outline-none transition-all placeholder:text-gray-400" onChange={e => setFormData({...formData, name: e.target.value})} />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-[#000000] mb-2">Nomor WhatsApp *</label>
+                    <input required type="tel" placeholder="08xxxxxxxx" className="w-full bg-[#FFF2E0] border-2 border-[#000000] p-3 rounded-xl focus:ring-0 focus:border-[#F06685] outline-none transition-all placeholder:text-gray-400" onChange={e => setFormData({...formData, phone: e.target.value})} />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-[#000000] mb-2">Email</label>
+                    <input type="email" placeholder="email@contoh.com" className="w-full bg-[#FFF2E0] border-2 border-[#000000] p-3 rounded-xl focus:ring-0 focus:border-[#F06685] outline-none transition-all placeholder:text-gray-400" onChange={e => setFormData({...formData, email: e.target.value})} />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-bold text-[#000000] mb-2">Jenis Kelamin *</label>
+                      <select required className="w-full bg-[#FFF2E0] border-2 border-[#000000] p-3 rounded-xl focus:ring-0 focus:border-[#F06685] outline-none transition-all" onChange={e => setFormData({...formData, gender: e.target.value})}>
+                        <option value="">Pilih...</option>
+                        <option value="L">Laki-laki</option>
+                        <option value="P">Perempuan</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-bold text-[#000000] mb-2">Tanggal Lahir *</label>
+                      <input required type="date" className="w-full bg-[#FFF2E0] border-2 border-[#000000] p-3 rounded-xl focus:ring-0 focus:border-[#F06685] outline-none transition-all" onChange={e => setFormData({...formData, dob: e.target.value})} />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-[#000000] mb-2">Alamat Domisili </label>
+                    <textarea placeholder="Tuliskan alamat lengkap..." rows={3} className="w-full bg-[#FFF2E0] border-2 border-[#000000] p-3 rounded-xl focus:ring-0 focus:border-[#F06685] outline-none transition-all resize-none placeholder:text-gray-400" onChange={e => setFormData({...formData, address: e.target.value})} />
+                  </div>
+                  
+                  <button 
+                    disabled={loading} 
+                    type="submit" 
+                    className={`w-full font-amaranth text-xl p-4 rounded-2xl font-bold mt-4 transition-all border-4 border-[#000000] ${loading ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-[0px_0px_0px_#000000]' : 'bg-[#F06685] text-white hover:bg-[#DB3347] shadow-[4px_4px_0px_#000000] active:translate-y-1 active:shadow-none'}`}
+                  >
+                    {loading ? 'Memproses...' : 'Dapatkan Voucher!'}
+                  </button>
+                </form>
+              </div>
             </div>
-            
-            <button 
-              disabled={loading} 
-              type="submit" 
-              className={`w-full text-white p-4 rounded-xl font-bold mt-2 shadow-lg transition-all ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 hover:-translate-y-1 hover:shadow-blue-500/30'}`}
-            >
-              {loading ? 'Memproses Data...' : 'Klaim Voucher Sekarang'}
-            </button>
-          </form>
-        </div>
+          </>
+        )}
       </div>
-    </div>
+    </>
   );
 }

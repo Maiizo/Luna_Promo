@@ -21,18 +21,25 @@ export default function CashierDashboard() {
 
   return (
     <div className="p-8 max-w-md mx-auto text-center mt-10">
-      <h1 className="text-3xl font-bold mb-2 text-gray-800">Dashboard Kasir</h1>
-      <p className="text-gray-600 mb-10">Sistem Promo Luna Pet Mall</p>
-      
-      {/* Tombol Raksasa untuk Buka Scanner */}
-      <Link 
-        href="/cashier/scan" 
-        className="flex flex-col items-center justify-center bg-blue-600 hover:bg-blue-700 text-white p-10 rounded-2xl shadow-xl transition-all"
-      >
-        <span className="text-6xl mb-4">📸</span>
-        <span className="font-bold text-2xl">Buka Scanner</span>
-        <span className="text-sm text-blue-200 mt-2 font-normal">Scan QR Code Voucher dari HP Pelanggan</span>
-      </Link>
+      <h1 className="text-3xl font-bold mb-2 text-white">Dashboard </h1>
+      <br></br>
+      <div className="grid grid-cols-1 gap-4">
+        {/* Tombol untuk Buka Scanner */}
+        <Link 
+          href="/cashier/scan" 
+          className="flex flex-col items-center justify-center bg-blue-600 hover:bg-blue-700 text-white p-6 rounded-2xl shadow-xl transition-all"
+        >
+          <span className="font-bold text-xl">Buka Scanner</span>
+        </Link>
+
+        {/* Tombol untuk Riwayat */}
+        <Link 
+          href="/history" 
+          className="flex flex-col items-center justify-center bg-slate-600 hover:bg-slate-700 text-white p-6 rounded-2xl shadow-xl transition-all"
+        >
+          <span className="font-bold text-xl">History</span>
+        </Link>
+      </div>
 
       <button 
         onClick={async () => {

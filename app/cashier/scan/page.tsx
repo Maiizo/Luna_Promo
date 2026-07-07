@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function ScannerPage() {
   const [scannedCode, setScannedCode] = useState<string | null>(null);
@@ -80,7 +81,12 @@ export default function ScannerPage() {
 
   return (
     <div className="p-6 max-w-md mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Redeem Voucher</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Redeem Voucher</h1>
+        <Link href="/" className="text-sm text-gray-400 hover:text-white hover:underline transition-colors">
+          &larr; Kembali
+        </Link>
+      </div>
 
       {!scannedCode && (
         <div className="rounded-lg overflow-hidden border-4 border-gray-300">

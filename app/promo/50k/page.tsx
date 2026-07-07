@@ -10,17 +10,33 @@ export default function Promo50kPage() {
   const [voucherCode, setVoucherCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+ const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // --- VALIDASI NOMOR WHATSAPP ---
-    if (!/^\d+$/.test(formData.phone) || !formData.phone.startsWith('08') || formData.phone.length < 7) {
-      alert("Pastikan Nomor WhatsApp valid:\n\n- Harus diawali dengan '08'\n- Minimal 7 digit angka");
+    // 1. FORMAT NOMOR UNTUK WHATSAPP BOT (Ubah awalan 0 / +62 menjadi 62)
+    let formattedPhone = formData.phone.trim().replace(/\D/g, ''); // Hapus semua karakter non-angka
+    if (formattedPhone.startsWith('0')) {
+      formattedPhone = '62' + formattedPhone.substring(1);
+    }
+    
+    if (formattedPhone.length < 10) {
+      alert("Nomor WhatsApp tidak valid.");
+      setLoading(false); return;
+    }
+
+    // 2. ANTI-SPAM (Cek apakah nomor HP sudah pernah dapat promo ini)
+    const { data: existingCustomer } = await supabase
+      .from('customers')
+      .select('id')
+      .eq('phone', formattedPhone)
+      .maybeSingle();
+
+    if (existingCustomer) {
+      alert("Maaf, Nomor WhatsApp ini sudah pernah mengklaim voucher.");
       setLoading(false);
       return;
     }
-    // --------------------------------
 
     const genderToSave = formData.gender === 'L' ? 'M' : 'F';
 
@@ -28,7 +44,7 @@ export default function Promo50kPage() {
       .from('customers')
       .insert([{
         name: formData.name,
-        phone: formData.phone,
+        phone: formattedPhone,
         email: formData.email || null,
         gender: genderToSave,
         dob: formData.dob,
@@ -77,7 +93,7 @@ export default function Promo50kPage() {
             ========================================== */}
         {voucherCode ? (
           <div className="flex flex-col items-center p-6 pt-12">
-            <div className="bg-white p-8 rounded-[32px] border-4 border-[#000000] shadow-[8px_8px_0px_#F06685] max-w-sm w-full text-center">
+            <div className="bg-white p-4 sm:p-8 rounded-[32px] border-4 border-[#000000] shadow-[8px_8px_0px_#F06685] max-w-sm w-full text-center">
               <h2 className="text-3xl font-bold mb-2">Terima Kasih!</h2>
               
               <div className="bg-[#FACCCC] p-5 rounded-2xl border-2 border-[#000000] mb-8">
@@ -95,8 +111,8 @@ export default function Promo50kPage() {
                 </p>
               </div>
 
-              <div id="qr-code-container" className="bg-[#FFF2E0] p-4 inline-block rounded-3xl border-4 border-[#F0D9CC] mb-2">
-                <QRCodeCanvas value={voucherCode} size={200} fgColor="#000000" bgColor="#FFF2E0" />
+              <div id="qr-code-container" className="bg-[#FFF2E0] p-4 inline-block rounded-3xl border-4 border-[#F0D9CC] mb-2 w-full max-w-[232px] h-auto">
+                <QRCodeCanvas value={voucherCode} size={200} fgColor="#000000" bgColor="#FFF2E0" className="w-full h-auto" />
               </div>
 
               <button
@@ -133,22 +149,41 @@ export default function Promo50kPage() {
            ========================================== */
           <>
             {/* HERO SECTION */}
-            <div className="pt-12 pb-20 px-6 text-center relative z-0">
+         <div className="pt-12 pb-20 px-6 text-center relative z-0">
+              {/* LOGO LUNA.JPG DIMASUKKAN DI SINI */}
               <div className="w-28 h-28 bg-white rounded-full mx-auto mb-4 flex items-center justify-center border-4 border-[#000000] shadow-[6px_6px_0px_#F06685] overflow-hidden">
-                {/* Gunakan logo Luna di sini. Sementara pakai teks Amaranth Bold */}
-                <span className="text-[#F06685] font-bold text-3xl italic">Luna</span>
+                <img 
+                  src="/Luna.jpg" 
+                  alt="Luna Pet Mall Logo" 
+                  className="w-full h-full object-cover" 
+                />
               </div>
               
               <h1 className="text-4xl font-bold mb-1 tracking-tight">Luna Pet Mall</h1>
               <p className="text-[#F06685] text-xl italic font-bold mb-6">Grow With Luna Pet-Mall</p>
               
               <div className="flex flex-col items-center gap-1 font-sans font-semibold text-sm">
-                <p>📍 Jl. Jemur Andayani 1B, Surabaya</p>
-                <p>📞 0817-398-810 | 📷 @lunapetshopsby</p>
+                <p>📍 Jl. Jemur Handayani 1B, Surabaya</p>
+                <p>📞 0817-398-810  </p>
+                 <p className="flex items-center gap-1.5">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="inline-block">
+                    <defs>
+                      <radialGradient id="instagram-gradient" cx="0.3" cy="1.1" r="1">
+                        <stop offset="0%" stopColor="#F58529" />
+                        <stop offset="50%" stopColor="#DD2A7B" />
+                        <stop offset="100%" stopColor="#8134AF" />
+                      </radialGradient>
+                    </defs>
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="url(#instagram-gradient)"></rect>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" stroke="white" strokeWidth="2" fill="none"></path>
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" stroke="white" strokeWidth="2.5" strokeLinecap="round"></line>
+                  </svg>
+                  @lunapetshopsby
+                </p>
               </div>
             </div>
 
-            <div className="max-w-md mx-auto px-4 -mt-6 relative z-10">
+            <div className="max-w-md mx-auto px-4 -mt-10 relative z-10">
               
               {/* KARTU INFO PROMO */}
               <div className="bg-[#FACCCC] rounded-[24px] border-4 border-[#000000] shadow-[6px_6px_0px_#F06685] p-6 mb-8 text-center">
@@ -174,7 +209,7 @@ export default function Promo50kPage() {
 
                   <div>
                     <label className="block text-sm font-bold text-[#000000] mb-2">Nomor WhatsApp *</label>
-                    <input required type="tel" placeholder="0812xxxxxxx" className="w-full bg-[#FFF2E0] border-2 border-[#000000] p-3 rounded-xl focus:ring-0 focus:border-[#F06685] outline-none transition-all placeholder:text-gray-400" onChange={e => setFormData({...formData, phone: e.target.value})} />
+                    <input required type="tel" placeholder="08xxxxxxxx" className="w-full bg-[#FFF2E0] border-2 border-[#000000] p-3 rounded-xl focus:ring-0 focus:border-[#F06685] outline-none transition-all placeholder:text-gray-400" onChange={e => setFormData({...formData, phone: e.target.value})} />
                   </div>
 
                   <div>
@@ -184,7 +219,7 @@ export default function Promo50kPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-bold text-[#000000] mb-2">Gender *</label>
+                      <label className="block text-sm font-bold text-[#000000] mb-2">Jenis Kelamin *</label>
                       <select required className="w-full bg-[#FFF2E0] border-2 border-[#000000] p-3 rounded-xl focus:ring-0 focus:border-[#F06685] outline-none transition-all" onChange={e => setFormData({...formData, gender: e.target.value})}>
                         <option value="">Pilih...</option>
                         <option value="L">Laki-laki</option>
