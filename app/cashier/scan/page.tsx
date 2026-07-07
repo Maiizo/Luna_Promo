@@ -18,12 +18,17 @@ export default function ScannerPage() {
     });
   }, [router]);
 
+  const formatDiscountLabel = (type: string) => {
+    if (type === '50k_discount') return 'Diskon Rp 50.000';
+    if (type === 'free_sample') return 'Free Sample';
+    return 'Tidak Diketahui'; 
+  };
+
   const handleScan = async (text: string) => {
-    if (scannedCode) return; // Prevent scanning multiple times rapidly
+    if (scannedCode) return; 
     setScannedCode(text);
     setErrorMsg(null);
 
-    // Lookup voucher in DB
     const { data, error } = await supabase
       .from('vouchers')
       .select('*, customers(*)')
@@ -31,10 +36,25 @@ export default function ScannerPage() {
       .single();
 
     if (error || !data) {
-      setErrorMsg("Voucher not found or invalid.");
-    } else {
-      setVoucherData(data);
+      setErrorMsg("Voucher tidak ditemukan atau tidak valid.");
+      return;
     }
+
+   const deadline = new Date('2026-08-19T23:59:59+07:00');
+    const now = new Date();
+
+    if (now > deadline) {
+      setErrorMsg("Voucher sudah kedaluwarsa (Lewat batas 19 Agustus 2026).");
+      
+      // Opsional: Update status di database menjadi expired
+      if (data.status !== 'expired') {
+        await supabase.from('vouchers').update({ status: 'expired' }).eq('id', data.id);
+      }
+      return;
+    }
+
+    setVoucherData(data);
+
   };
 
   const handleRedeem = async () => {
@@ -107,7 +127,7 @@ export default function ScannerPage() {
              </button>
           ) : (
             <button onClick={() => {setScannedCode(null); setVoucherData(null);}} className="w-full bg-gray-600 text-white p-3 rounded font-bold">
-              Voucher Cannot Be Used. Scan Another.
+              Voucher sudah dipakai
             </button>
           )}
         </div>

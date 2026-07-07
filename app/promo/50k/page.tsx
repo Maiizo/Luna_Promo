@@ -144,7 +144,7 @@ export default function Promo50kPage() {
               
               <div className="flex flex-col items-center gap-1 font-sans font-semibold text-sm">
                 <p>📍 Jl. Jemur Andayani 1B, Surabaya</p>
-                <p>📱 0812-1620-2221 | 📷 @lunapetshopsby</p>
+                <p>📞 0817-398-810 | 📷 @lunapetshopsby</p>
               </div>
             </div>
 

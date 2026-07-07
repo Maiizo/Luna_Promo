@@ -48,9 +48,7 @@ export default function Promo50kPage() {
     setLoading(false);
   };
 
-  // ==========================================
   // TAMPILAN JIKA VOUCHER BERHASIL DIGENERATE
-  // ==========================================
   if (voucherCode) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center p-6 pt-12">
@@ -103,7 +101,7 @@ export default function Promo50kPage() {
             📍 Jl. Jemur Andayani 18, Surabaya
           </p>
           <p className="flex items-center gap-2">
-            📱 0812-1620-2221 | 📷 @lunapetshopsby
+            📞 0817-398-810 | 📷 @lunapetshopsby
           </p>
         </div>
       </div>

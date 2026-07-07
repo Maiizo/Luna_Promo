@@ -70,7 +70,7 @@ export default function History() {
       .from('vouchers')
       .select('*')
       .eq('code', code.trim())
-      .single();
+      .select();
 
     if (fetchError || !voucherData) {
       alert('Voucher tidak ditemukan');
