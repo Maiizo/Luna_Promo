@@ -3,35 +3,54 @@ import { useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { QRCodeCanvas } from 'qrcode.react';
 
-export default function PromoSamplePage() {
+export default function Promo50kPage() {
   const [formData, setFormData] = useState({
     name: '', phone: '', email: '', gender: '', dob: '', address: ''
   });
   const [voucherCode, setVoucherCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  
+  // STATE BARU UNTUK CUSTOM ERROR NOTIFICATION
+  const [errorToast, setErrorToast] = useState<string | null>(null);
+
+  // FUNGSI UNTUK MENAMPILKAN ERROR
+  const showError = (message: string) => {
+    setErrorToast(message);
+    // Hilangkan error otomatis setelah 4 detik
+    setTimeout(() => {
+      setErrorToast(null);
+    }, 4000);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    let formattedPhone = formData.phone.trim().replace(/\D/g, '');
-    if (formattedPhone.startsWith('0')) {
-      formattedPhone = '62' + formattedPhone.substring(1);
-    }
-    
-    if (formattedPhone.length < 10) {
-      alert("Nomor WhatsApp tidak valid.");
-      setLoading(false); return;
+    const rawPhone = formData.phone.trim();
+
+    // 1. VALIDASI KETAT: Hanya angka & wajib mulai dari 62
+    if (!/^62\d+$/.test(rawPhone)) {
+      showError("Nomor WA harus diawali '62' dan hanya berisi angka");
+      setLoading(false); 
+      return;
     }
 
+    // 2. VALIDASI PANJANG NOMOR
+    if (rawPhone.length < 7 || rawPhone.length > 17) {
+      showError("Nomor WA harus terdiri dari 7 hingga 17 digit angka");
+      setLoading(false); 
+      return;
+    }
+
+    // 3. ANTI-SPAM CEK KE DATABASE
     const { data: existingCustomer } = await supabase
       .from('customers')
       .select('id')
-      .eq('phone', formattedPhone)
+      .eq('phone', rawPhone)
       .maybeSingle();
 
     if (existingCustomer) {
-      alert("Maaf, Nomor WhatsApp ini sudah pernah mengklaim promo.");
+      showError("Maaf, Nomor WhatsApp ini sudah pernah mengklaim voucher");
       setLoading(false);
       return;
     }
@@ -44,11 +63,12 @@ export default function PromoSamplePage() {
 
     const genderToSave = formData.gender === 'L' ? 'M' : 'F';
 
+    // 4. SIMPAN DATA PELANGGAN
     const { data: customer, error: customerErr } = await supabase
       .from('customers')
       .insert([{
         name: formData.name,
-        phone: formattedPhone,
+        phone: rawPhone, // Menggunakan nomor murni ketikan pelanggan (yang sudah tervalidasi 62)
         email: formData.email || null,
         gender: genderToSave,
         dob: formattedDob,
@@ -62,23 +82,28 @@ export default function PromoSamplePage() {
       .single();
 
     if (customerErr || !customer) {
-      alert("Error dari Supabase: " + customerErr.message);
+      showError("Gagal menyimpan data ke server. Coba lagi nanti.");
       setLoading(false);
       return;
     }
 
-    // PERUBAHAN: Kode sekarang berawalan SMPL- agar kasir langsung tahu ini Free Sample
-    const code = 'SMPL-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+    // 5. GENERATE VOUCHER 50K
+    const code = '50K-' + Math.random().toString(36).substring(2, 8).toUpperCase();
     const { error: voucherErr } = await supabase
       .from('vouchers')
       .insert([{
         code: code,
         customer_id: customer.id,
-        discount_type: 'free_sample', // PERUBAHAN: Tipe diskon disimpan sebagai free_sample
+        discount_type: '50k_discount',
         status: 'active'
       }]);
 
-    if (!voucherErr) setVoucherCode(code);
+    if (!voucherErr) {
+      setVoucherCode(code);
+    } else {
+      showError("Gagal membuat voucher.");
+    }
+    
     setLoading(false);
   };
 
@@ -87,8 +112,31 @@ export default function PromoSamplePage() {
       <style dangerouslySetInnerHTML={{__html: `
         @import url('https://fonts.googleapis.com/css2?family=Amaranth:ital,wght@0,400;0,700;1,400;1,700&display=swap');
         .font-amaranth { font-family: 'Amaranth', sans-serif; }
+        
+        /* Animasi masuk untuk Toast yang diperbaiki */
+        @keyframes slideDown {
+          0% { transform: translateY(-100%); opacity: 0; }
+          100% { transform: translateY(0); opacity: 1; }
+        }
+        .animate-slideDown { animation: slideDown 0.3s ease-out forwards; }
       `}} />
 
+
+
+      {/* ==========================================
+          CUSTOM TOAST ERROR NOTIFICATION
+          ========================================== */}
+      {/* ==========================================
+          CUSTOM TOAST ERROR NOTIFICATION
+          ========================================== */}
+      {errorToast && (
+        <div className="fixed top-6 left-0 right-0 z-50 flex justify-center w-full pointer-events-none px-4">
+          <div className="w-full max-w-sm bg-[#DB3347] text-white px-5 py-3 rounded-2xl border-4 border-[#000000] shadow-[4px_4px_0px_#000000] flex items-start gap-3 animate-slideDown pointer-events-auto">
+            <span className="text-xl">⚠️</span>
+            <p className="font-sans font-bold text-sm leading-tight pt-0.5">{errorToast}</p>
+          </div>
+        </div>
+      )}
       <div className="min-h-screen bg-[#FFF2E0] font-amaranth text-[#000000] pb-12 selection:bg-[#F06685] selection:text-white">
         
         {voucherCode ? (
@@ -107,7 +155,7 @@ export default function PromoSamplePage() {
                   Berikan Review Google
                 </a>
                 <p className="text-xs font-sans font-medium leading-relaxed">
-                  Klik tombol di atas, lalu tunjukkan bukti review ke kasir.
+                  Klik tombol di atas, lalu tunjukkan bukti ke kasir.
                 </p>
               </div>
 
@@ -122,7 +170,7 @@ export default function PromoSamplePage() {
                     const url = canvas.toDataURL('image/png');
                     const link = document.createElement('a');
                     link.href = url;
-                    link.download = `FreeSample-Luna-${voucherCode}.png`;
+                    link.download = `Voucher-Luna-${voucherCode}.png`;
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
@@ -154,7 +202,7 @@ export default function PromoSamplePage() {
               <p className="text-[#F06685] text-xl italic font-bold mb-6">Grow With Luna Pet-Mall</p>
               
               <div className="flex flex-col items-center gap-1 font-sans font-semibold text-sm">
-                <p>📍 Jl. Jemur Handayani 1B, Surabaya</p>
+                <p>📍 Jl. Jemur Andayani 1B, Surabaya</p>
                 <p>📞 0817-398-810  </p>
                  <p className="flex items-center gap-1.5">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="inline-block">
@@ -174,7 +222,7 @@ export default function PromoSamplePage() {
 
             <div className="max-w-md mx-auto px-4 -mt-10 relative z-10">
               
-              <div className="bg-[#FACCCC] rounded-[24px] border-4 border-[#000000] shadow-[6px_6px_0px_#F06685] p-6 mb-8 text-center">
+                 <div className="bg-[#FACCCC] rounded-[24px] border-4 border-[#000000] shadow-[6px_6px_0px_#F06685] p-6 mb-8 text-center">
                 <div className="bg-[#000000] text-white text-xs font-bold px-4 py-2 rounded-full inline-block mb-3 uppercase tracking-wider">
                   Hadiah Khusus!
                 </div>
@@ -192,13 +240,13 @@ export default function PromoSamplePage() {
                   
                   <div>
                     <label className="block text-sm font-bold text-[#000000] mb-2">Nama Lengkap *</label>
-                    <input required type="text" placeholder="Nama" className="w-full bg-[#FFF2E0] border-2 border-[#000000] p-3 rounded-xl focus:ring-0 focus:border-[#F06685] outline-none transition-all placeholder:text-gray-400" onChange={e => setFormData({...formData, name: e.target.value})} />
+                    <input required type="text" placeholder="Nama..." className="w-full bg-[#FFF2E0] border-2 border-[#000000] p-3 rounded-xl focus:ring-0 focus:border-[#F06685] outline-none transition-all placeholder:text-gray-400" onChange={e => setFormData({...formData, name: e.target.value})} />
                   </div>
 
                   <div>
                     <label className="block text-sm font-bold text-[#000000] mb-2">Nomor WhatsApp *</label>
-                    <input required type="tel" placeholder="08xxxxxxxx" className="w-full bg-[#FFF2E0] border-2 border-[#000000] p-3 rounded-xl focus:ring-0 focus:border-[#F06685] outline-none transition-all placeholder:text-gray-400" onChange={e => setFormData({...formData, phone: e.target.value})} />
-                  </div>
+                    <input required type="text" placeholder="628xxxxxxxx" className="w-full bg-[#FFF2E0] border-2 border-[#000000] p-3 rounded-xl focus:ring-0 focus:border-[#F06685] outline-none transition-all placeholder:text-gray-400" onChange={e => setFormData({...formData, phone: e.target.value})} />
+                     </div>
 
                   <div>
                     <label className="block text-sm font-bold text-[#000000] mb-2">Email</label>
@@ -226,13 +274,12 @@ export default function PromoSamplePage() {
                     <textarea placeholder="Tuliskan alamat lengkap..." rows={3} className="w-full bg-[#FFF2E0] border-2 border-[#000000] p-3 rounded-xl focus:ring-0 focus:border-[#F06685] outline-none transition-all resize-none placeholder:text-gray-400" onChange={e => setFormData({...formData, address: e.target.value})} />
                   </div>
                   
-                  {/* PERUBAHAN: Teks Tombol diubah */}
                   <button 
                     disabled={loading} 
                     type="submit" 
                     className={`w-full font-amaranth text-xl p-4 rounded-2xl font-bold mt-4 transition-all border-4 border-[#000000] ${loading ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-[0px_0px_0px_#000000]' : 'bg-[#F06685] text-white hover:bg-[#DB3347] shadow-[4px_4px_0px_#000000] active:translate-y-1 active:shadow-none'}`}
                   >
-                    {loading ? 'Memproses...' : 'Dapatkan Free Sample!'}
+                    {loading ? 'Memproses...' : 'Dapatkan Voucher!'}
                   </button>
                 </form>
               </div>
