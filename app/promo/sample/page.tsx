@@ -3,19 +3,18 @@ import { useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { QRCodeCanvas } from 'qrcode.react';
 
-export default function Promo50kPage() {
+export default function PromoSamplePage() {
   const [formData, setFormData] = useState({
     name: '', phone: '', email: '', gender: '', dob: '', address: ''
   });
   const [voucherCode, setVoucherCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
- const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // 1. FORMAT NOMOR UNTUK WHATSAPP BOT (Ubah awalan 0 / +62 menjadi 62)
-    let formattedPhone = formData.phone.trim().replace(/\D/g, ''); // Hapus semua karakter non-angka
+    let formattedPhone = formData.phone.trim().replace(/\D/g, '');
     if (formattedPhone.startsWith('0')) {
       formattedPhone = '62' + formattedPhone.substring(1);
     }
@@ -25,7 +24,6 @@ export default function Promo50kPage() {
       setLoading(false); return;
     }
 
-    // 2. ANTI-SPAM (Cek apakah nomor HP sudah pernah dapat promo ini)
     const { data: existingCustomer } = await supabase
       .from('customers')
       .select('id')
@@ -33,16 +31,14 @@ export default function Promo50kPage() {
       .maybeSingle();
 
     if (existingCustomer) {
-      alert("Maaf, Nomor WhatsApp ini sudah pernah mengklaim voucher.");
+      alert("Maaf, Nomor WhatsApp ini sudah pernah mengklaim promo.");
       setLoading(false);
       return;
     }
 
-    // 3. FORMAT TANGGAL LAHIR (Ubah YYYY-MM-DD menjadi DD/MM/YYYY)
     let formattedDob = formData.dob;
     if (formData.dob) {
       const [year, month, day] = formData.dob.split('-');
-      // Hapus '0' di depan untuk bulan dan hari (misal: 01 -> 1)
       formattedDob = `${parseInt(day, 10)}/${parseInt(month, 10)}/${year}`;
     }
 
@@ -71,13 +67,14 @@ export default function Promo50kPage() {
       return;
     }
 
-    const code = '50K-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+    // PERUBAHAN: Kode sekarang berawalan SMPL- agar kasir langsung tahu ini Free Sample
+    const code = 'SMPL-' + Math.random().toString(36).substring(2, 8).toUpperCase();
     const { error: voucherErr } = await supabase
       .from('vouchers')
       .insert([{
         code: code,
         customer_id: customer.id,
-        discount_type: 'free_sample',
+        discount_type: 'free_sample', // PERUBAHAN: Tipe diskon disimpan sebagai free_sample
         status: 'active'
       }]);
 
@@ -87,18 +84,13 @@ export default function Promo50kPage() {
 
   return (
     <>
-      {/* Import Font Amaranth sesuai Brand Guidelines Luna */}
       <style dangerouslySetInnerHTML={{__html: `
         @import url('https://fonts.googleapis.com/css2?family=Amaranth:ital,wght@0,400;0,700;1,400;1,700&display=swap');
         .font-amaranth { font-family: 'Amaranth', sans-serif; }
       `}} />
 
-      {/* Latar Belakang menggunakan Luna Eggshell (#FFF2E0) */}
       <div className="min-h-screen bg-[#FFF2E0] font-amaranth text-[#000000] pb-12 selection:bg-[#F06685] selection:text-white">
         
-        {/* ==========================================
-            TAMPILAN JIKA FORM BERHASIL DISUBMIT
-            ========================================== */}
         {voucherCode ? (
           <div className="flex flex-col items-center p-6 pt-12">
             <div className="bg-white p-4 sm:p-8 rounded-[32px] border-4 border-[#000000] shadow-[8px_8px_0px_#F06685] max-w-sm w-full text-center">
@@ -115,7 +107,7 @@ export default function Promo50kPage() {
                   Berikan Review Google
                 </a>
                 <p className="text-xs font-sans font-medium leading-relaxed">
-                  Klik tombol di atas, lalu tunjukkan bukti review.
+                  Klik tombol di atas, lalu tunjukkan bukti review ke kasir.
                 </p>
               </div>
 
@@ -130,7 +122,7 @@ export default function Promo50kPage() {
                     const url = canvas.toDataURL('image/png');
                     const link = document.createElement('a');
                     link.href = url;
-                    link.download = `Voucher-Luna-${voucherCode}.png`;
+                    link.download = `FreeSample-Luna-${voucherCode}.png`;
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
@@ -152,19 +144,10 @@ export default function Promo50kPage() {
           </div>
         ) : (
           
-        /* ==========================================
-           TAMPILAN HALAMAN UTAMA & FORM (LANDING PAGE)
-           ========================================== */
           <>
-            {/* HERO SECTION */}
-         <div className="pt-12 pb-20 px-6 text-center relative z-0">
-              {/* LOGO LUNA.JPG DIMASUKKAN DI SINI */}
+            <div className="pt-12 pb-20 px-6 text-center relative z-0">
               <div className="w-28 h-28 bg-white rounded-full mx-auto mb-4 flex items-center justify-center border-4 border-[#000000] shadow-[6px_6px_0px_#F06685] overflow-hidden">
-                <img 
-                  src="/Luna.jpg" 
-                  alt="Luna Pet Mall Logo" 
-                  className="w-full h-full object-cover" 
-                />
+                <img src="/Luna.jpg" alt="Luna Pet Mall Logo" className="w-full h-full object-cover" />
               </div>
               
               <h1 className="text-4xl font-bold mb-1 tracking-tight">Luna Pet Mall</h1>
@@ -177,9 +160,7 @@ export default function Promo50kPage() {
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="inline-block">
                     <defs>
                       <radialGradient id="instagram-gradient" cx="0.3" cy="1.1" r="1">
-                        <stop offset="0%" stopColor="#F58529" />
-                        <stop offset="50%" stopColor="#DD2A7B" />
-                        <stop offset="100%" stopColor="#8134AF" />
+                        <stop offset="0%" stopColor="#F58529" /><stop offset="50%" stopColor="#DD2A7B" /><stop offset="100%" stopColor="#8134AF" />
                       </radialGradient>
                     </defs>
                     <rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="url(#instagram-gradient)"></rect>
@@ -193,26 +174,25 @@ export default function Promo50kPage() {
 
             <div className="max-w-md mx-auto px-4 -mt-10 relative z-10">
               
-              {/* KARTU INFO PROMO */}
               <div className="bg-[#FACCCC] rounded-[24px] border-4 border-[#000000] shadow-[6px_6px_0px_#F06685] p-6 mb-8 text-center">
                 <div className="bg-[#000000] text-white text-xs font-bold px-4 py-2 rounded-full inline-block mb-3 uppercase tracking-wider">
-                  Promo Khusus!
+                  Hadiah Khusus!
                 </div>
+                {/* PERUBAHAN: Teks UI diubah menjadi Free Sample */}
                 <h2 className="text-2xl font-bold mb-2">
-                  Klaim Voucher Rp 50.000
+                  Klaim Free Sample
                 </h2>
                 <p className="font-sans text-sm font-medium">
-                  Isi data diri kamu di bawah ini untuk mendapatkan akses Voucher Diskon dan link Google Review.
+                  Isi data diri di bawah ini untuk mendapatkan akses QR Code Free Sample dan link Google Review.
                 </p>
               </div>
 
-              {/* FORMULIR DATA DIRI */}
               <div className="bg-white rounded-[32px] border-4 border-[#000000] shadow-[8px_8px_0px_#F0D9CC] p-6">
                 <form onSubmit={handleSubmit} className="flex flex-col gap-5 font-sans font-medium">
                   
                   <div>
                     <label className="block text-sm font-bold text-[#000000] mb-2">Nama Lengkap *</label>
-                    <input required type="text" placeholder="Nama " className="w-full bg-[#FFF2E0] border-2 border-[#000000] p-3 rounded-xl focus:ring-0 focus:border-[#F06685] outline-none transition-all placeholder:text-gray-400" onChange={e => setFormData({...formData, name: e.target.value})} />
+                    <input required type="text" placeholder="Nama" className="w-full bg-[#FFF2E0] border-2 border-[#000000] p-3 rounded-xl focus:ring-0 focus:border-[#F06685] outline-none transition-all placeholder:text-gray-400" onChange={e => setFormData({...formData, name: e.target.value})} />
                   </div>
 
                   <div>
@@ -246,12 +226,13 @@ export default function Promo50kPage() {
                     <textarea placeholder="Tuliskan alamat lengkap..." rows={3} className="w-full bg-[#FFF2E0] border-2 border-[#000000] p-3 rounded-xl focus:ring-0 focus:border-[#F06685] outline-none transition-all resize-none placeholder:text-gray-400" onChange={e => setFormData({...formData, address: e.target.value})} />
                   </div>
                   
+                  {/* PERUBAHAN: Teks Tombol diubah */}
                   <button 
                     disabled={loading} 
                     type="submit" 
                     className={`w-full font-amaranth text-xl p-4 rounded-2xl font-bold mt-4 transition-all border-4 border-[#000000] ${loading ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-[0px_0px_0px_#000000]' : 'bg-[#F06685] text-white hover:bg-[#DB3347] shadow-[4px_4px_0px_#000000] active:translate-y-1 active:shadow-none'}`}
                   >
-                    {loading ? 'Memproses...' : 'Dapatkan Voucher!'}
+                    {loading ? 'Memproses...' : 'Dapatkan Free Sample!'}
                   </button>
                 </form>
               </div>
