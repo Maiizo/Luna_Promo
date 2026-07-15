@@ -230,7 +230,7 @@ export default function Promo50kPage() {
                   Klaim Voucher Rp 50.000
                 </h2>
                 <p className="font-sans text-sm font-medium">
-                  Isi data diri kamu di bawah ini untuk mendapatkan akses Voucher Diskon dan link Google Review.
+                  Isi data diri di bawah ini untuk mendapatkan akses Voucher Diskon, link Google Review dan free AKOONG Sample.
                 </p>
               </div>
 

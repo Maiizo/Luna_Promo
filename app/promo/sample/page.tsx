@@ -231,7 +231,7 @@ export default function Promo50kPage() {
                   Klaim Free Sample
                 </h2>
                 <p className="font-sans text-sm font-medium">
-                  Isi data diri di bawah ini untuk mendapatkan akses QR Code Free Sample dan link Google Review.
+                  Isi data diri di bawah ini untuk mendapatkan akses QR Code Free Sample, link Google Review dan free AKOONG Sample.
                 </p>
               </div>
 
