@@ -21,28 +21,25 @@ export default function Promo50kPage() {
       setErrorToast(null);
     }, 4000);
   };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     const rawPhone = formData.phone.trim();
 
-    // 1. VALIDASI KETAT: Hanya angka & wajib mulai dari 62
+    // 1. VALIDASI KETAT
     if (!/^62\d+$/.test(rawPhone)) {
       showError("Nomor WA harus diawali '62' dan hanya berisi angka");
       setLoading(false); 
       return;
     }
-
-    // 2. VALIDASI PANJANG NOMOR
     if (rawPhone.length < 7 || rawPhone.length > 17) {
       showError("Nomor WA harus terdiri dari 7 hingga 17 digit angka");
       setLoading(false); 
       return;
     }
 
-    // 3. ANTI-SPAM CEK KE DATABASE
+    // 2. ANTI-SPAM CEK KE DATABASE (Tetap di Frontend agar cepat)
     const { data: existingCustomer } = await supabase
       .from('customers')
       .select('id')
@@ -55,55 +52,46 @@ export default function Promo50kPage() {
       return;
     }
 
+    // 3. FORMAT TANGGAL UNTUK DIKIRIM KE BACKEND
     let formattedDob = formData.dob;
     if (formData.dob) {
       const [year, month, day] = formData.dob.split('-');
       formattedDob = `${parseInt(day, 10)}/${parseInt(month, 10)}/${year}`;
     }
-
     const genderToSave = formData.gender === 'L' ? 'M' : 'F';
-
-    // 4. SIMPAN DATA PELANGGAN
-    const { data: customer, error: customerErr } = await supabase
-      .from('customers')
-      .insert([{
-        name: formData.name,
-        phone: rawPhone, // Menggunakan nomor murni ketikan pelanggan (yang sudah tervalidasi 62)
-        email: formData.email || null,
-        gender: genderToSave,
-        dob: formattedDob,
-        address: formData.address || null,
-        customer_type: 'eceran',
-        is_frozen: 0,
-        accept_newsletter: 1,
-        credit_limit: 0
-      }])
-      .select('id')
-      .single();
-
-    if (customerErr || !customer) {
-      showError("Gagal menyimpan data ke server. Coba lagi nanti.");
-      setLoading(false);
-      return;
-    }
-
-    // 5. GENERATE VOUCHER 50K
-    const code = '50K-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-    const { error: voucherErr } = await supabase
-      .from('vouchers')
-      .insert([{
-        code: code,
-        customer_id: customer.id,
-        discount_type: '50k_discount',
-        status: 'active'
-      }]);
-
-    if (!voucherErr) {
-      setVoucherCode(code);
-    } else {
-      showError("Gagal membuat voucher.");
-    }
     
+    // 4. GENERATE RANDOM CODE
+    const randomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+    // 5. INI YANG HILANG! FETCH KE BACKEND (API ROUTE)
+    try {
+      const response = await fetch('/api/promo/50k', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          phone: rawPhone,
+          email: formData.email,
+          gender: genderToSave,
+          date_input: formattedDob,
+          code: randomCode
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setVoucherCode('50K-' + randomCode); // Tampilkan QR di layar
+      } else {
+        showError(result.error || "Gagal memproses voucher");
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+      showError("Terjadi kesalahan koneksi ke server");
+    }
+
     setLoading(false);
   };
 
@@ -198,25 +186,14 @@ export default function Promo50kPage() {
                 <img src="/Luna.jpg" alt="Luna Pet Mall Logo" className="w-full h-full object-cover" />
               </div>
               
-              <h1 className="text-4xl font-bold mb-1 tracking-tight">Luna Pet Mall</h1>
               <p className="text-[#F06685] text-xl italic font-bold mb-6">Grow With Luna Pet-Mall</p>
               
               <div className="flex flex-col items-center gap-1 font-sans font-semibold text-sm">
                 <p>📍 Jl. Jemur Andayani 1B, Surabaya</p>
                 <p>📞 0817-398-810  </p>
-                 <p className="flex items-center gap-1.5">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="inline-block">
-                    <defs>
-                      <radialGradient id="instagram-gradient" cx="0.3" cy="1.1" r="1">
-                        <stop offset="0%" stopColor="#F58529" /><stop offset="50%" stopColor="#DD2A7B" /><stop offset="100%" stopColor="#8134AF" />
-                      </radialGradient>
-                    </defs>
-                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="url(#instagram-gradient)"></rect>
-                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" stroke="white" strokeWidth="2" fill="none"></path>
-                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" stroke="white" strokeWidth="2.5" strokeLinecap="round"></line>
-                  </svg>
-                  @lunapetshopsby
-                </p>
+                 <a href="https://linktr.ee/lunapetshopsby" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[#F06685] font-bold hover:underline">
+                  https://linktr.ee/lunapetshopsby
+                </a>
               </div>
             </div>
 

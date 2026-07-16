@@ -25,12 +25,12 @@ export async function POST(request: Request) {
         { 
           name: name, 
           phone: phone, 
-           customer_type: 'eceran', 
-          dob: formattedDate, 
-          gender: gender || 'Tidak Disebutkan' 
+                customer_type: 'eceran', 
+          dob: formattedDate, // Format YYYY-MM-DD yang benar
+          gender: gender || 'Tidak Disebutkan' // Wajib di DB kamu (ikon diamond solid)
         }
       ])
-      .select('id') 
+      .select('id') // Kita butuh ID UUID-nya untuk disambung ke tabel vouchers
       .single(); 
 
     if (customerError) {
@@ -38,14 +38,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: customerError.message }, { status: 400 });
     }
 
-    // --- 3. STEP 2: SIMPAN KE TABEL 'vouchers' ---
+// --- 3. STEP 2: SIMPAN KE TABEL 'vouchers' ---
     const { error: voucherError } = await supabase
       .from('vouchers')
       .insert([
         {
           code: code,
           customer_id: customerData.id, 
-          discount_type: '50k_discount', // <-- UBAH JADI INI (huruf kecil & pakai _discount)
+          discount_type: '25k_discount', // <-- UBAH JADI INI (huruf kecil & pakai _discount)
           status: 'active'               // <-- UBAH JADI INI (huruf kecil)
         }
       ]);
@@ -56,31 +56,20 @@ export async function POST(request: Request) {
     }
 
     // --- 4. KIRIM WA VIA FONNTE ---
-    // PESAN DAN URL DIDEKLARASIKAN DI SINI AGAR TIDAK ERROR
-    const message = `Halo ${name}! 🐾\n\nTerima kasih telah berbelanja dengan kami. Ini adalah Voucher Diskon Rp 50.000 + FREE 1 pcs produk Akoong dari Luna Pet Mall!\n\nKode Unik: 50K-${code}\n\. Sampai jumpa!`;
-    const qrImageUrl = `https://quickchart.io/qr?text=50K-${code}&size=300&margin=2`;
-
-    // PEMBERSIH NOMOR HP
-    let cleanPhone = phone.replace(/\D/g, '');
-    if (cleanPhone.startsWith('8')) {
-      cleanPhone = '62' + cleanPhone; 
-    } else if (cleanPhone.startsWith('0')) {
-      cleanPhone = '62' + cleanPhone.substring(1); 
-    }
-
-    console.log("Nomor Tujuan Fonnte:", cleanPhone);
-
-    // MENGGUNAKAN FORMDATA SESUAI STANDAR FONNTE
-    const formData = new FormData();
-    formData.append('target', cleanPhone);
-    formData.append('message', message);
+    const qrImageUrl = `https://quickchart.io/qr?text=25K-${code}&size=300&margin=2`;
+    const message = `Halo ${name}! 🐾\n\nTerima kasih telah berpartisipasi. Ini adalah Voucher Diskon Rp 25.000 + FREE 1 pcs produk Akoong dari Luna Pet Mall!\n\nKode Unik: 25K-${code}\n\nSilakan tunjukkan QR Code ini ke kasir kami. Sampai jumpa!`;
 
     const response = await fetch('https://api.fonnte.com/send', {
       method: 'POST',
       headers: {
         'Authorization': process.env.FONNTE_TOKEN || '',
+        'Content-Type': 'application/json'
       },
-      body: formData, 
+      body: JSON.stringify({
+        target: phone,
+        message: message,
+        url: qrImageUrl 
+      }),
     });
 
     const fonnteData = await response.json();
@@ -89,11 +78,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, message: "Data tersimpan & Voucher WA terkirim!" });
     } else {
       console.error("Fonnte API Error:", fonnteData);
-      return NextResponse.json({ success: false, error: fonnteData.reason || "Fonnte menolak pengiriman" }, { status: 400 });
+      return NextResponse.json({ success: false, error: fonnteData.reason }, { status: 400 });
     }
 
   } catch (error) {
-    console.error("Unexpected Error:", error);
-    return NextResponse.json({ success: false, error: "Terjadi kesalahan tak terduga" }, { status: 500 });
+    console.error("Server Route Error:", error);
+    return NextResponse.json({ success: false, error: "Internal Server Error" }, { status: 250 });
   }
 }
