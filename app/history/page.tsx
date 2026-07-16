@@ -49,6 +49,8 @@ export default function History() {
   // Fixed: Menggunakan format diskon Olsera
   const formatDiscountLabel = (type: string) => {
     if (type === '50k_discount') return 'Diskon Rp 50.000';
+     if (type === '20k_discount') return 'Diskon Rp 20.000';
+   
     if (type === 'free_sample') return 'Free Sample';
     return 'Tidak diketahui';
   };

@@ -207,7 +207,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                   Klaim Free Sample
                 </h2>
                 <p className="font-sans text-sm font-medium">
-                  Isi data diri di bawah ini untuk mendapatkan akses link Google Review, free AKOONG Sample.
+                  Isi data diri di bawah ini untuk mendapatkan akses link Google Review dan free AKOONG Sample.
                 </p>
               </div>
 
