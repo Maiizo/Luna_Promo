@@ -55,42 +55,49 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: voucherError.message }, { status: 400 });
     }
 
-    // --- 4. KIRIM WA VIA FONNTE ---
-    // PESAN DAN URL DIDEKLARASIKAN DI SINI AGAR TIDAK ERROR
-    const message = `Halo ${name}! 🐾\n\nTerima kasih telah berbelanja dengan kami. Ini adalah Voucher Diskon Rp 50.000 + FREE 1 pcs produk Akoong dari Luna Pet Mall!\n\nKode Unik: 50K-${code}\n\. Sampai jumpa!`;
-    const qrImageUrl = `https://quickchart.io/qr?text=50K-${code}&size=300&margin=2`;
 
-    // PEMBERSIH NOMOR HP
-    let cleanPhone = phone.replace(/\D/g, '');
-    if (cleanPhone.startsWith('8')) {
-      cleanPhone = '62' + cleanPhone; 
-    } else if (cleanPhone.startsWith('0')) {
-      cleanPhone = '62' + cleanPhone.substring(1); 
-    }
 
-    console.log("Nomor Tujuan Fonnte:", cleanPhone);
+    // Sisakan ini saja di bagian bawah setelah insert Supabase
+    return NextResponse.json({ success: true, message: "Data tersimpan!" });
 
-    // MENGGUNAKAN FORMDATA SESUAI STANDAR FONNTE
-    const formData = new FormData();
-    formData.append('target', cleanPhone);
-    formData.append('message', message);
 
-    const response = await fetch('https://api.fonnte.com/send', {
-      method: 'POST',
-      headers: {
-        'Authorization': process.env.FONNTE_TOKEN || '',
-      },
-      body: formData, 
-    });
 
-    const fonnteData = await response.json();
+    // // --- 4. KIRIM WA VIA FONNTE ---
+    // // PESAN DAN URL DIDEKLARASIKAN DI SINI AGAR TIDAK ERROR
+    // const message = `Halo ${name}! 🐾\n\nTerima kasih telah berbelanja dengan kami. Ini adalah Voucher Diskon Rp 50.000 + FREE 1 pcs produk Akoong dari Luna Pet Mall!\n\nKode Unik: 50K-${code}\n\. Sampai jumpa!`;
+    // const qrImageUrl = `https://quickchart.io/qr?text=50K-${code}&size=300&margin=2`;
 
-    if (fonnteData.status) {
-      return NextResponse.json({ success: true, message: "Data tersimpan & Voucher WA terkirim!" });
-    } else {
-      console.error("Fonnte API Error:", fonnteData);
-      return NextResponse.json({ success: false, error: fonnteData.reason || "Fonnte menolak pengiriman" }, { status: 400 });
-    }
+    // // PEMBERSIH NOMOR HP
+    // let cleanPhone = phone.replace(/\D/g, '');
+    // if (cleanPhone.startsWith('8')) {
+    //   cleanPhone = '62' + cleanPhone; 
+    // } else if (cleanPhone.startsWith('0')) {
+    //   cleanPhone = '62' + cleanPhone.substring(1); 
+    // }
+
+    // console.log("Nomor Tujuan Fonnte:", cleanPhone);
+
+    // // MENGGUNAKAN FORMDATA SESUAI STANDAR FONNTE
+    // const formData = new FormData();
+    // formData.append('target', cleanPhone);
+    // formData.append('message', message);
+
+    // const response = await fetch('https://api.fonnte.com/send', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Authorization': process.env.FONNTE_TOKEN || '',
+    //   },
+    //   body: formData, 
+    // });
+
+    // const fonnteData = await response.json();
+
+    // if (fonnteData.status) {
+    //   return NextResponse.json({ success: true, message: "Data tersimpan & Voucher WA terkirim!" });
+    // } else {
+    //   console.error("Fonnte API Error:", fonnteData);
+    //   return NextResponse.json({ success: false, error: fonnteData.reason || "Fonnte menolak pengiriman" }, { status: 400 });
+    // }
 
   } catch (error) {
     console.error("Unexpected Error:", error);
