@@ -210,7 +210,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                   Klaim Voucher Rp 50.000
                 </h2>
                 <p className="font-sans text-sm font-medium">
-                  Isi data diri di bawah ini untuk mendapatkan akses Voucher Diskon, link Google Review dan free AKOONG Sample.
+                  Isi data diri di bawah ini untuk mendapatkan akses Voucher Diskon, link Google Review dan free Sample.
                 </p>
               </div>
 

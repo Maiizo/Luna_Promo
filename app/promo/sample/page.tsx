@@ -144,7 +144,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                   </a>
                   <p className="text-sm font-sans font-medium leading-relaxed">
                     Klik tombol di atas untuk memberikan ulasan (review).<br/><br/>
-                    Setelah selesai, <b>tunjukkan bukti layarmu ke staf kami</b> untuk mengambil Free Sample dan Free AKOONG Sample!
+                    Setelah selesai, <b>tunjukkan bukti layarmu ke staf kami</b> untuk mengambil Free Sample!
                   </p>
                 </div>
               </div>
