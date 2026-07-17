@@ -127,58 +127,29 @@ const handleSubmit = async (e: React.FormEvent) => {
       )}
       <div className="min-h-screen bg-[#FFF2E0] font-amaranth text-[#000000] pb-12 selection:bg-[#F06685] selection:text-white">
         
-        {voucherCode ? (
-          <div className="flex flex-col items-center p-6 pt-12">
-            <div className="bg-white p-4 sm:p-8 rounded-[32px] border-4 border-[#000000] shadow-[8px_8px_0px_#F06685] max-w-sm w-full text-center">
-              <h2 className="text-3xl font-bold mb-2">Terima Kasih!</h2>
-              
-              <div className="bg-[#FACCCC] p-5 rounded-2xl border-2 border-[#000000] mb-8">
-                <p className="text-lg font-bold mb-3">Langkah Terakhir:</p>
-                <a 
-                  href="https://maps.app.goo.gl/p1ufiChGmCn4TYBf7" 
-                  target="_blank" 
-                  rel="noreferrer" 
-                  className="flex items-center justify-center gap-2 w-full bg-[#F06685] text-white hover:bg-[#DB3347] transition-colors p-3 rounded-xl font-bold border-2 border-[#000000] shadow-[4px_4px_0px_#000000] active:translate-y-1 active:shadow-none mb-4"
-                >
-                  Berikan Review Google
-                </a>
-                <p className="text-xs font-sans font-medium leading-relaxed">
-                  Klik tombol di atas, lalu tunjukkan bukti ke kasir.
-                </p>
+       {voucherCode ? (
+            <div className="flex flex-col items-center p-6 pt-12">
+              <div className="bg-white p-4 sm:p-8 rounded-[32px] border-4 border-[#000000] shadow-[8px_8px_0px_#F06685] max-w-sm w-full text-center">
+                <h2 className="text-3xl font-bold mb-4">Terima Kasih!</h2>
+                
+                <div className="bg-[#FACCCC] p-5 rounded-2xl border-2 border-[#000000]">
+                  <p className="text-lg font-bold mb-3">Langkah Terakhir:</p>
+                  <a 
+                    href="https://maps.app.goo.gl/p1ufiChGmCn4TYBf7"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-center gap-2 w-full bg-[#F06685] text-white hover:bg-[#DB3347] transition-colors p-3 rounded-xl font-bold border-2 border-[#000000] shadow-[4px_4px_0px_#000000] active:translate-y-1 active:shadow-none mb-4"
+                  >
+                    Berikan Review Google
+                  </a>
+                  <p className="text-sm font-sans font-medium leading-relaxed">
+                    Klik tombol di atas untuk memberikan ulasan (review).<br/><br/>
+                    Setelah selesai, <b>tunjukkan bukti layarmu ke staf kami</b> untuk mengambil Free Sample dan Free AKOONG Sample!
+                  </p>
+                </div>
               </div>
-
-              <div id="qr-code-container" className="bg-[#FFF2E0] p-4 inline-block rounded-3xl border-4 border-[#F0D9CC] mb-2 w-full max-w-[232px] h-auto">
-                <QRCodeCanvas value={voucherCode} size={200} fgColor="#000000" bgColor="#FFF2E0" className="w-full h-auto" />
-              </div>
-
-              <button
-                onClick={() => {
-                  const canvas = document.querySelector('#qr-code-container canvas') as HTMLCanvasElement;
-                  if (canvas) {
-                    const url = canvas.toDataURL('image/png');
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = `Voucher-Luna-${voucherCode}.png`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                  }
-                }}
-                className="block mx-auto mb-6 font-sans text-xs font-bold text-black bg-[#F0D9CC] px-3 py-1 rounded-lg border-2 border-black hover:bg-[#e6c8b5] transition-colors"
-              >
-                Unduh QR Code
-              </button>
-              
-              <div className="bg-[#F0D9CC] p-3 rounded-xl mb-4 border-2 border-[#000000] border-dashed">
-                <p className="text-2xl font-mono font-bold tracking-widest">{voucherCode}</p>
-              </div>
-              
-              <p className="text-white font-bold text-base bg-[#DB3347] py-2 px-4 rounded-full border-2 border-black shadow-[2px_2px_0px_#000000]">
-                Berlaku hingga 19 Agustus 2026
-              </p>
             </div>
-          </div>
-        ) : (
+          ) : (
           
           <>
             <div className="pt-12 pb-20 px-6 text-center relative z-0">
