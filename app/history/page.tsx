@@ -59,11 +59,14 @@ export default function History() {
     if (!code.trim()) return;
     setIsRedeeming(true);
     
+    // FIX: Remove prefixes like '50K-', '20K-', or 'SAMPLE-' before checking the database
+    const cleanCode = code.trim().split('-').pop() || code.trim();
+
     const { data: voucherData, error: fetchError } = await supabase
       .from('vouchers')
       .select('*')
-      .eq('code', code.trim())
-      .single(); // Use single() instead of select() for 1 row
+      .eq('code', cleanCode) // Use the cleaned code here
+      .single(); 
 
     if (fetchError || !voucherData) {
       alert('Voucher tidak ditemukan');
