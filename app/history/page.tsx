@@ -38,11 +38,14 @@ export default function History() {
   }, [router]);
 
   // Fixed: Join query ke tabel customers untuk mengambil email
-  const fetchVouchers = async () => {
+const fetchVouchers = async () => {
     const { data, error } = await supabase
       .from('vouchers')
       .select('*, customers(email, name)')
+      // ADD THIS LINE TO FILTER THE VOUCHERS:
+      .in('discount_type', ['50k_discount', '20k_discount']) 
       .order('created_at', { ascending: false });
+
     if (!error && data) setVouchers(data as any);
   };
 
