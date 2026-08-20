@@ -60,22 +60,16 @@ const fetchVouchers = async () => {
 
   const processRedeem = async (code: string) => {
     if (!code.trim()) return;
+
+    // --- TAMBAHKAN KODE INI UNTUK MENGGEMBOK KASIR ---
+    alert('Maaf, penukaran ditolak. Masa berlaku semua voucher telah habis pada 19 Agustus 2026.');
+    setRedeemCode('');
+    setShowScanner(false);
+    return; 
+    // -------------------------------------------------
+
     setIsRedeeming(true);
-    
-    // FIX: Remove prefixes like '50K-', '20K-', or 'SAMPLE-' before checking the database
-    const cleanCode = code.trim().split('-').pop() || code.trim();
-
-    const { data: voucherData, error: fetchError } = await supabase
-      .from('vouchers')
-      .select('*')
-      .eq('code', cleanCode) // Use the cleaned code here
-      .single(); 
-
-    if (fetchError || !voucherData) {
-      alert('Voucher tidak ditemukan');
-      setIsRedeeming(false);
-      return;
-    }
+    // ... (sisa kode di bawahnya biarkan saja, tidak akan pernah dieksekusi lagi)
     
     if (voucherData.status === 'redeemed' || voucherData.status === 'expired') {
       alert(`Voucher tidak bisa digunakan (Status: ${voucherData.status})`);

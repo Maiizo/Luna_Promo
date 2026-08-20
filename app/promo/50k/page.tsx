@@ -23,6 +23,10 @@ export default function Promo50kPage() {
   };
 const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+showError("Maaf, periode promo telah berakhir pada 19 Agustus 2026.");
+    return;
+    
     setLoading(true);
 
     const rawPhone = formData.phone.trim();
