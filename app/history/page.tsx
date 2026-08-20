@@ -58,39 +58,11 @@ const fetchVouchers = async () => {
     return 'Tidak diketahui';
   };
 
-  const processRedeem = async (code: string) => {
-    if (!code.trim()) return;
-
-    // --- TAMBAHKAN KODE INI UNTUK MENGGEMBOK KASIR ---
+const processRedeem = async (code: string) => {
+    // Kunci permanen tanpa perlu memanggil database lagi
     alert('Maaf, penukaran ditolak. Masa berlaku semua voucher telah habis pada 19 Agustus 2026.');
     setRedeemCode('');
     setShowScanner(false);
-    return; 
-    // -------------------------------------------------
-
-    setIsRedeeming(true);
-    // ... (sisa kode di bawahnya biarkan saja, tidak akan pernah dieksekusi lagi)
-    
-    if (voucherData.status === 'redeemed' || voucherData.status === 'expired') {
-      alert(`Voucher tidak bisa digunakan (Status: ${voucherData.status})`);
-      setIsRedeeming(false);
-      return;
-    }
-    
-    const { error: updateError } = await supabase
-      .from('vouchers')
-      .update({ status: 'redeemed', redeemed_at: new Date().toISOString() })
-      .eq('id', voucherData.id);
-      
-    if (updateError) {
-      alert('Gagal menggunakan voucher: ' + updateError.message);
-    } else {
-      alert('Voucher berhasil digunakan!');
-      setRedeemCode('');
-      setShowScanner(false);
-      await fetchVouchers();
-    }
-    setIsRedeeming(false);
   };
 
   const handleRedeem = async (e: React.FormEvent<HTMLFormElement>) => {
